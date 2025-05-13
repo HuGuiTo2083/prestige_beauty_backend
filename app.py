@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 # Permite CORS para todos los orígenes (esto es útil para desarrollo)
 CORS(app)
-
+#test de git
 def get_db_connection():
     """
     Abre una conexión a PostgreSQL usando la URI almacenada en la
