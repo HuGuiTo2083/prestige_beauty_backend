@@ -3,7 +3,8 @@ import os
 from dotenv import load_dotenv
 import psycopg2
 from flask_cors import CORS
-
+import smtplib
+from email.mime.text import MIMEText
 
 load_dotenv()
 
@@ -74,6 +75,46 @@ def getScheduleById():
 
 
 
+# Configuración SMTP de Gmail
+SMTP_SERVER = os.getenv("GMAIL_ACCOUNT")
+SMTP_PORT = 587
+GMAIL_USER = os.getenv("GMAIL_ACCOUNT")
+GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
+
+def enviar_codigo_por_email(destinatario, codigo):
+    asunto = "Tu código de verificación"
+    cuerpo = f"Tu código de verificación es: {codigo}"
+    mensaje = MIMEText(cuerpo, "plain")
+    mensaje["Subject"] = asunto
+    mensaje["From"] = GMAIL_USER
+    mensaje["To"] = destinatario
+
+    # Conexión y envío
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()  # Seguridad
+        server.login(GMAIL_USER, GMAIL_PASSWORD)
+        server.sendmail(GMAIL_USER, destinatario, mensaje.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+        return False
+
+@app.route("/send_code", methods=["POST"])
+def send_code():
+    data = request.json
+    email = data.get("email")
+    codigo = data.get("code")
+
+    if not email or not codigo:
+        return jsonify({"error": "Faltan parámetros email o codigo"}), 400
+
+    exito = enviar_codigo_por_email(email, codigo)
+    if exito:
+        return jsonify({"mensaje": "Correo enviado correctamente"})
+    else:
+        return jsonify({"error": "Error enviando correo"}), 500
 
 
 
@@ -81,6 +122,6 @@ def getScheduleById():
 def home():
     return render_template('index.html')
 
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #     app.run(debug=True)
     
