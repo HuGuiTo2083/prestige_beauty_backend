@@ -6,6 +6,8 @@ from flask_cors import CORS
 import smtplib
 from email.mime.text import MIMEText
 
+import psycopg2.extras
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -71,6 +73,40 @@ def getScheduleById():
         print("error...." + str(e))
         # Si el token no es válido, devuelve un error
         return jsonify({"error": "Invalid Info"}), 400
+
+
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    myEmail = data.get('email')
+    myPassword = data.get('password')
+
+    try:
+        mySQL = """
+         SELECT * FROM USR_MSTR WHERE USR_EMAIL = %s
+         AND USR_PASSWORD = %s
+        """
+        try:
+            
+            conn = get_db_connection()
+
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(mySQL, (myEmail, myPassword,))
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            if not rows:
+                return {"status: ": 0}
+            return {"rows" : rows, "status: " : 1}
+        except Exception as e:
+            print(str(e))
+            return {"error" + str(e)}
+            
+    except ValueError as e:
+        print("error: " + str(e))
+        return {"error" + str(e)}
 
 
 
