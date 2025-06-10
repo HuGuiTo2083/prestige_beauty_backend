@@ -75,6 +75,23 @@ def getScheduleById():
         return jsonify({"error": "Invalid Info"}), 400
 
 
+def exist_email(email) ->bool:
+    mySQL ="""
+      SELECT USR_NAME FROM USR_MSTR WHERE USR_EMAIL = %s
+    """
+    try: 
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(mySQL, (email,))
+        rows = cur.fetchall()
+        if not rows:
+            return False
+        else:
+            return True
+    except ValueError as e:
+        print("error: " + str(e))
+        return {"error" + str(e)}
+
 
 
 @app.route('/login', methods=['POST'])
@@ -98,8 +115,12 @@ def login():
             cur.close()
             conn.close()
             if not rows:
-                return {"status: ": 0}
-            return {"rows" : rows, "status: " : 1}
+                if  exist_email(myEmail):
+                    return {"status": 0, "number": 0}
+                else:
+                    return {"status": 0, "number": 1}
+            
+            return {"rows" : rows, "status" : 1}
         except Exception as e:
             print(str(e))
             return {"error" + str(e)}
@@ -158,6 +179,6 @@ def send_code():
 def home():
     return render_template('index.html')
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
     
