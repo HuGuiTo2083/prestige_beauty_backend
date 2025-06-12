@@ -129,6 +129,33 @@ def login():
         print("error: " + str(e))
         return {"error" + str(e)}
 
+@app.route('/regist', methods=['POST'])
+def regist():
+    data = request.get_json()
+    myEmail = data.get('email')
+    if exist_email(myEmail):
+        return jsonify({"error": "ya existe email", "status": 1}), 400
+    
+    myName = data.get('name')
+    myPassword = data.get('password')
+    mySQL = """INSERT INTO USR_MSTR (USR_NAME, USR_PASSWORD, USR_EMAIL, USR_TYPE_USER)
+               VALUES (%s, %s, %s, 1)
+                RETURNING USR_ID;
+               """
+    try:
+        conn  = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(mySQL, (myName, myPassword, myEmail,))
+        row = cur.fetchone()['usr_id']
+        return jsonify({"success": "creado exitosamente", "status": 0, "id": row}), 200
+        
+        print("")
+    except ValueError as e:
+        print("error: " + str(e))
+        return jsonify({"error": str(e)})
+
+
+
 
 
 
