@@ -140,14 +140,19 @@ def regist():
     myPassword = data.get('password')
     mySQL = """INSERT INTO USR_MSTR (USR_NAME, USR_PASSWORD, USR_EMAIL, USR_TYPE_USER)
                VALUES (%s, %s, %s, 1)
-                RETURNING USR_ID;
+                RETURNING USR_ID, USR_TYPE_USER;
                """
     try:
         conn  = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(mySQL, (myName, myPassword, myEmail,))
-        row = cur.fetchone()['usr_id']
-        return jsonify({"success": "creado exitosamente", "status": 0, "id": row}), 200
+        row = cur.fetchone()
+        return jsonify({
+            "success": "creado exitosamente", 
+            "status": 0, 
+            "id": row['USR_ID'],
+            "type": row['USR_TYPE_USER']
+            }), 200
         
         print("")
     except ValueError as e:
