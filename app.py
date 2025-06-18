@@ -75,6 +75,49 @@ def getScheduleById():
         return jsonify({"error": "Invalid Info"}), 400
 
 
+@app.route('/getSchedule_with_user', methods=['POST'])
+def getScheduleById():
+    data = request.get_json()
+    myId = data.get('id')  
+    myUser_Id = data.get('user_id')  
+    try:
+        # Aquí puedes verificar si el usuario existe en tu base de datos.
+        # Si no existe, puedes registrar al usuario.
+         sql = """
+    SELECT SCHEDULE_DATE, SCHEDULE_HOUR, SCHEDULE_STATUS
+    FROM SCHEDULE_MSTR
+    WHERE SCHEDULE_USR_ID = %s
+
+    """
+         conn = get_db_connection()
+         try:
+             with conn.cursor() as cur:
+                 cur.execute(sql, (myId,))
+                 rows = cur.fetchall()
+                 if not rows:
+                     # No existe ningún registro con ese email
+                     return {"Messsage": "No hay registros"}
+     
+                 schedules = [
+                      {
+                          "date":    row[0],
+                          "hour":    row[1],
+                          "status":  row[2]
+                      }
+                      for row in rows
+                      ]
+        # Devuelve JSON (puede estar vacío si no hay filas)
+                 return jsonify(schedules), 200
+         finally:
+             conn.close()
+
+    except ValueError as e:
+        print("error...." + str(e))
+        # Si el token no es válido, devuelve un error
+        return jsonify({"error": "Invalid Info"}), 400
+
+
+
 def exist_email(email) ->bool:
     mySQL ="""
       SELECT USR_NAME FROM USR_MSTR WHERE USR_EMAIL = %s
