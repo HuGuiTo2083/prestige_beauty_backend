@@ -31,6 +31,100 @@ def get_db_connection():
     conn = psycopg2.connect(dsn)
     return conn
 
+@app.route('/reject_Request', methods=['POST'])
+def myReject():
+    try:
+        data = request.get_json()
+        myId = data.get('id')
+
+        mySQL = """
+                UPDATE SCHEDULE_MSTR SET SCHEDULE_STATUS='REJ' WHERE SCHEDULE_ID = %s
+                """
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(mySQL, (myId,))
+            conn.commit()
+            if cur.rowcount >1:
+                return jsonify({"success" : "Updated to REJ"})
+            else:
+                return jsonify({"error" : "This id not exist"})
+
+        except ValueError as e:
+            print("error en BD: " + str(e))
+            return jsonify({"error en BD" : str(e)}), 400
+
+
+
+    except ValueError as e:
+        print("error: " + str(e))
+        return jsonify({"error" : str(e)}), 400
+
+
+
+@app.route('/accept_Request', methods=['POST'])
+def myAcept():
+
+    data = request.get_json()
+    myId = data.get('id')
+    mySQL = """
+            UPDATE SCHEDULE_MSTR SET SCHEDULE_STATUS='ACC' WHERE SCHEDULE_ID = %s
+            """
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(mySQL, (myId,))
+        conn.commit()
+        if cur.rowcount >1:
+            return jsonify({"success" : "Updated to ACC"})
+        else:
+            return jsonify({"error" : "This id not exist"})
+    except ValueError as e:
+        print("error en BD: " + str(e))
+        return jsonify({"error en BD" : str(e)}), 400
+
+
+@app.route('/book_Service', methods=['POST'])
+def bock_service():
+
+    data = request.get_json()
+    service = data.get('service')
+    hour = data.get('hour')
+    date = data.get('date')
+    artist_id = data.get('artist_id')
+    user_id = data.get('user_id')
+    mySQL = """
+            INSERT INTO SCHEDULE_MSTR(SCHEDULE_DATE, SCHEDULE_HOUR, SCHEDULE_USR_ID, SCHEDULE_STATUS)
+            VALUES(%s, %s, %s, 'PND')
+            RETURNING SCHEDULE_ID
+            """
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(mySQL, (date, hour, artist_id,))
+        conn.commit()
+        result = cur.fetchone()  # fetchone() para un solo registro
+        schedule_id = result['schedule_id']
+        mySQL2 = """
+            INSERT INTO SCHEDULE_DET(SCHEDULEDET_USER_ID, SCHEDULEDET_SCHEDULE_ID, SCHEDULEDET_SERVICE)
+            VALUES(%s, %s, %s)
+           
+            """
+        
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(mySQL2, (user_id, schedule_id, service,))
+        conn.commit()
+        return jsonify({"success": "se insertó en ambas tablas"})
+        
+    except ValueError as e:
+        print("error en BD: " + str(e))
+        return jsonify({"error en BD" : str(e)}), 400
+
+
+    
+
+
+
 
 
 @app.route('/getSchedule', methods=['POST'])
