@@ -316,6 +316,8 @@ def login():
         print("error: " + str(e))
         return {"error" + str(e)}
 
+
+
 @app.route('/regist', methods=['POST'])
 def regist():
     data = request.get_json()
@@ -334,11 +336,12 @@ def regist():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(mySQL, (myName, myPassword, myEmail,))
         row = cur.fetchone()
+        conn.commit()
         return jsonify({
             "success": "creado exitosamente", 
             "status": 0, 
-            "id": row['USR_ID'],
-            "type": row['USR_TYPE_USER']
+            "id": row['usr_id'],
+            "type": row['usr_type_user']
             }), 200
         
         print("")
@@ -347,6 +350,44 @@ def regist():
         return jsonify({"error": str(e)})
 
 
+@app.route('/saveAppointment', methods=['POST'])
+def saveAppointment():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    specialist_id = data.get('specialist_id')
+    subervice = data.get('subservice')
+    type = data.get('type')
+    money = data.get('money')
+    blocks = data.get('blocks')
+    date = data.get('date')
+    hour = data.get('hour')
+    
+    myQuery= """
+    INSERT INTO SCHEDULE2_MSTR (SCHEDULE2_USER_ID, SCHEDULE2_SPECIALIST_ID, SCHEDULE2_SUBSERVICE, SCHEDULE2_TYPE, SCHEDULE2_MONEY, SCHEDULE2_BLOCKS,
+    SCHEDULE2_DATE, SCHEDULE2_HOUR)
+    VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
+    RETURNING SCHEDULE2_ID
+    """
+    try:
+        conect = get_db_connection()
+        cursor = conect.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute(myQuery, (user_id, specialist_id, subervice, type, money, blocks, date, hour,))
+        myRegister = cursor.fetchone()
+        conect.commit()
+        return jsonify({
+            "Status" : "Success",
+            "ID" : myRegister["schedule2_id"],
+            "Message" : "Cita creada exitosamente"
+        })
+        
+    except Exception as e:
+        print("error: " + str(e))
+        return jsonify({'error': str(e)})
+
+        
+    
+    
+    return jsonify({'message': 'Hola'})
 
 
 
@@ -398,6 +439,6 @@ def send_code():
 def home():
     return render_template('index.html')
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
     
