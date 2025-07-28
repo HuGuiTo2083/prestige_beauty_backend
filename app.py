@@ -215,8 +215,8 @@ def getScheduleById_with_user():
 
 #este endpoint es para sacar los pedisos que debe de aprobar/rechazar en el admin
 
-@app.route('/getRequests', methods=['POST'])
-def getRequests():
+@app.route('/getRequests2', methods=['POST'])
+def getRequests2():
     data = request.get_json()
     myId = data.get('id')  
 
@@ -259,6 +259,153 @@ def getRequests():
         print("error...." + str(e))
         # Si el token no es válido, devuelve un error
         return jsonify({"error": "Invalid Info"}), 400
+
+
+
+@app.route('/getRequests', methods=['POST'])
+def getRequests():
+     
+
+    try:
+        # Aquí puedes verificar si el usuario existe en tu base de datos.
+        # Si no existe, puedes registrar al usuario.
+         sql = """
+    SELECT SCHEDULE2_SPECIALIST_ID, SCHEDULE2_SUBSERVICE,
+    SCHEDULE2_TYPE, SCHEDULE2_MONEY, SCHEDULE2_DATE, SCHEDULE2_HOUR, USR_NAME
+    FROM SCHEDULE2_MSTR JOIN USR_MSTR ON SCHEDULE2_USER_ID = USR_ID
+ORDER BY SCHEDULE2_ID DESC
+
+    """
+         conn = get_db_connection()
+         try:
+             with conn.cursor() as cur:
+                 cur.execute(sql)
+                 rows = cur.fetchall()
+                 if not rows:
+                     # No existe ningún registro con ese email
+                     return {"Messsage": "No hay registros"}
+     
+                 schedules = [
+                      {
+                          "SCHEDULE2_SPECIALIST_ID":    row[0],
+                          "SCHEDULE2_SUBSERVICE":    row[1],
+                          "SCHEDULE2_TYPE":  row[2],
+                          "SCHEDULE2_MONEY": row[3],
+                          "SCHEDULE2_DATE": row[4],
+                          "SCHEDULE2_HOUR" : row[5],
+                          "USR_NAME" : row[6]
+
+                      }
+                      for row in rows
+                      ]
+        # Devuelve JSON (puede estar vacío si no hay filas)
+                 return jsonify(schedules), 200
+         finally:
+             conn.close()
+
+    except ValueError as e:
+        print("error...." + str(e))
+        # Si el token no es válido, devuelve un error
+        return jsonify({"error": "Invalid Info"}), 400
+
+
+
+@app.route('/getRequestsByUser', methods=['POST'])
+def getRequestsByUser():
+    data = request.get_json()
+    myId =  data.get('id')
+
+    try:
+        # Aquí puedes verificar si el usuario existe en tu base de datos.
+        # Si no existe, puedes registrar al usuario.
+         sql = """
+    SELECT SCHEDULE2_SPECIALIST_ID, SCHEDULE2_SUBSERVICE,
+    SCHEDULE2_TYPE, SCHEDULE2_MONEY, SCHEDULE2_DATE, SCHEDULE2_HOUR, USR_NAME
+    FROM SCHEDULE2_MSTR JOIN USR_MSTR ON SCHEDULE2_USER_ID = USR_ID
+    WHERE SCHEDULE2_USER_ID = %s
+ORDER BY SCHEDULE2_ID DESC
+
+    """
+         conn = get_db_connection()
+         try:
+             with conn.cursor() as cur:
+                 cur.execute(sql, (myId,))
+                 rows = cur.fetchall()
+                 if not rows:
+                     # No existe ningún registro con ese email
+                     return {"Messsage": "No hay registros"}
+     
+                 schedules = [
+                      {
+                          "SCHEDULE2_SPECIALIST_ID":    row[0],
+                          "SCHEDULE2_SUBSERVICE":    row[1],
+                          "SCHEDULE2_TYPE":  row[2],
+                          "SCHEDULE2_MONEY": row[3],
+                          "SCHEDULE2_DATE": row[4],
+                          "SCHEDULE2_HOUR" : row[5],
+                          "USR_NAME" : row[6]
+
+                      }
+                      for row in rows
+                      ]
+        # Devuelve JSON (puede estar vacío si no hay filas)
+                 return jsonify(schedules), 200
+         finally:
+             conn.close()
+
+    except ValueError as e:
+        print("error...." + str(e))
+        # Si el token no es válido, devuelve un error
+        return jsonify({"error": "Invalid Info"}), 400
+
+
+
+
+@app.route('/getBussyByDate', methods=['POST'])
+def getBussyDate():
+     
+    data  = request.get_json()
+    specialist_id = data.get('specialist_id')
+    date = data.get('date')
+    print(str(specialist_id))
+    print(date)
+    try:
+        # Aquí puedes verificar si el usuario existe en tu base de datos.
+        # Si no existe, puedes registrar al usuario.
+         sql = """
+    SELECT SCHEDULE2_SPECIALIST_ID, SCHEDULE2_HOUR, SCHEDULE2_BLOCKS
+    FROM SCHEDULE2_MSTR WHERE SCHEDULE2_SPECIALIST_ID = %s
+    AND SCHEDULE2_DATE = %s
+
+    """
+         conn = get_db_connection()
+         try:
+             with conn.cursor() as cur:
+                 cur.execute(sql, (specialist_id, date,))
+                 rows = cur.fetchall()
+                 if not rows:
+                     # No existe ningún registro con ese email
+                     return [{"Messsage": "No hay registros"}]
+     
+                 schedules = [
+                      {
+                          "SCHEDULE2_SPECIALIST_ID":    row[0],
+                         "SCHEDULE2_HOUR" : row[1],
+                          "SCHEDULE2_BLOCKS":    row[2]
+                         
+                      }
+                      for row in rows
+                      ]
+        # Devuelve JSON (puede estar vacío si no hay filas)
+                 return jsonify(schedules), 200
+         finally:
+             conn.close()
+
+    except ValueError as e:
+        print("error...." + str(e))
+        # Si el token no es válido, devuelve un error
+        return jsonify({"error": "Invalid Info"}), 400
+
 
 
 
